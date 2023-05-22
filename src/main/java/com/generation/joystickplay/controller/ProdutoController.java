@@ -1,77 +1,69 @@
 package com.generation.joystickplay.controller;
 
-import java.util.List;
-
+import com.generation.joystickplay.model.Produto;
+import com.generation.joystickplay.repository.ProdutoRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.generation.joystickplay.model.Produto;
-import com.generation.joystickplay.repository.CategoriaRepository;
-import com.generation.joystickplay.repository.ProdutoRepository;
+import java.util.List;
+import java.util.Optional;
 
-import jakarta.validation.Valid;
-
-@RestController
 @RequestMapping("/produtos")
+@RestController
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProdutoController {
-	@Autowired
-	private ProdutoRepository produtoRepository;
 
-	@Autowired
-	private CategoriaRepository categoriaRepository;
+    @Autowired
+    private ProdutoRepository produtoRepository;
 
-	@GetMapping
-	public List<Produto> listar() {
-		return produtoRepository.findAll();
-	}
+    // Metodo para lista todos os produtos ja cadastrados
+    @GetMapping
+    public ResponseEntity<List<Produto>> getAll() {
+        return ResponseEntity.ok(produtoRepository.findAll());
+    }
 
-	@GetMapping("/{id}")
-	public Produto buscar(@PathVariable Long id) {
-		return produtoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-	}
+    // Metodo para listar um produto buscando pelo id ja definido
+    @GetMapping("/{id}")
+    public ResponseEntity<Produto> getById(@PathVariable Long id) {
+        return produtoRepository.findById(id).map(resposta -> ResponseEntity.ok(resposta))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	public Produto cadastrar(@RequestBody @Valid Produto produto) {
-		return produtoRepository.save(produto);
-	}
+    // Metodo para buscar um produto pelo nome
+    @GetMapping("/buscar/{nome}")
+    public ResponseEntity<List<Produto>> getByNome(@PathVariable String nome) {
+        return ResponseEntity.ok(produtoRepository.findAllByNomeContainingIgnoreCase(nome));
+    }
 
-	@PutMapping("/{id}")
-	public Produto atualizar(@PathVariable Long id, @RequestBody @Valid Produto produto) {
-		Produto produtoExistente = produtoRepository.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-		produtoExistente.setNome(produto.getNome());
-		produtoExistente.setPreco(produto.getPreco());
-		return produtoRepository.save(produtoExistente);
-	}
+    // Metodo para adicionar um novo produto
+    @PostMapping("/adicionar")
+    public ResponseEntity<Produto> post(@Valid @RequestBody Produto produto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(produtoRepository.save(produto));
+    }
 
-	@DeleteMapping("/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void excluir(@PathVariable Long id) {
-		produtoRepository.deleteById(id);
-	}
+    // Metodo para editar um produto ja existente
+    @PutMapping("/editar")
+    public ResponseEntity<Produto> put(@Valid @RequestBody Produto produto) {
+        return produtoRepository.findById(produto.getId())
+                .map(resposta -> ResponseEntity.status(HttpStatus.OK).body(produtoRepository.save(produto)))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 
-	@DeleteMapping
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void excluirTodos() {
-		produtoRepository.deleteAll();
-	}
+    // Metodo para deletar um produto ja existente
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/deletar/{id}")
+    public void delete(@PathVariable Long id) {
+        Optional<Produto> categoria = produtoRepository.findById(id);
 
-	public CategoriaRepository getCategoriaRepository() {
-		return categoriaRepository;
-	}
+        if (categoria.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
 
-	public void setCategoriaRepository(CategoriaRepository categoriaRepository) {
-		this.categoriaRepository = categoriaRepository;
-	}
+        produtoRepository.deleteById(id);
+    }
+
 }

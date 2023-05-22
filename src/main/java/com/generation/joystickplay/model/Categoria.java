@@ -1,31 +1,30 @@
 package com.generation.joystickplay.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+import java.util.List;
 
 @Entity
-@Table(name = "categoria")
+@Table(name = "tb_categorias")
 public class Categoria {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
 
-	@NotNull
-	private String nome;
-	
-	@NotNull
-	private String logo;
-	
-	@NotNull
-	private String tipo;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotBlank(message = "O campo genero deve ser preenchido!")
+    private String genero;
+
+    @NotBlank(message = "O campo descricao deve ser preenchido!")
+    @Size(max = 150, message = "O campo descricao nao pode ultrapassar 150 caracteres")
+    private String descricao;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "categoria", cascade = CascadeType.REMOVE)
+    @JsonIgnoreProperties("categoria")
+    private List<Produto> produtos;
 
 	public Long getId() {
 		return id;
@@ -35,28 +34,28 @@ public class Categoria {
 		this.id = id;
 	}
 
-	public String getNome() {
-		return nome;
+	public String getGenero() {
+		return genero;
 	}
 
-	public void setNome(String nome) {
-		this.nome = nome;
+	public void setGenero(String genero) {
+		this.genero = genero;
 	}
 
-	public String getLogo() {
-		return logo;
+	public String getDescricao() {
+		return descricao;
 	}
 
-	public void setLogo(String logo) {
-		this.logo = logo;
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
 	}
 
-	public String getTipo() {
-		return tipo;
+	public List<Produto> getProdutos() {
+		return produtos;
 	}
 
-	public void setTipo(String tipo) {
-		this.tipo = tipo;
+	public void setProdutos(List<Produto> produtos) {
+		this.produtos = produtos;
 	}
 
 }
